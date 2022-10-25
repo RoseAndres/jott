@@ -2,11 +2,14 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in jott.gemspec
-gemspec
-
+gem "glimmer-dsl-libui"
 gem "rake", "~> 13.0"
-
 gem "rspec", "~> 3.0"
-
 gem "standard", "~> 1.3"
+
+group :development, :test do
+  gem "dotenv"
+  gem "pry"
+  gem "pry-byebug"
+  gem "pry-doc"
+end
