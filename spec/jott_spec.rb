@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe Jott do
+RSpec.describe JottApp do
   it "has a version number" do
-    expect(Jott::VERSION).not_to be nil
-  end
-
-  it "does something useful" do
-    expect(false).to eq(true)
+    expect(JottApp.new.has_method(:launch)).to be true
   end
 end
