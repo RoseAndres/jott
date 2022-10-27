@@ -5,9 +5,13 @@ class JottApp
 
   attr_accessor :current_content
   attr_accessor :editing
+  attr_accessor :advanced_settings_enabled, :autosave_period, :workbook_path
 
   def initialize
-    current_content = ""
+    @current_content = ""
+    @workbook_path = "/path/to/workbooks"
+    @advanced_settings_enabled = false
+    @autosave_period = 15
     create_gui
   end
 
@@ -15,7 +19,7 @@ class JottApp
     # TODO move this logic into a side-effect of loading a new file, or autoloading
     # TODO the last file edited before closing the app
     # save contents if user isn't in the process of changing
-    Glimmer::LibUI::timer(15, repeat: has_content?) do
+    Glimmer::LibUI::timer(autosave_period, repeat: has_content?) do
       save_contents unless editing? || no_content?
     end
 
@@ -48,7 +52,33 @@ class JottApp
 
           }
           tab_item("Settings") {
+            # TODO change to table to better align text with controls
+            form {
+              padded true
 
+              entry {
+                stretchy false
+
+                label "Workbook Path"
+                enabled <= [self, :advanced_settings_enabled]
+                text <=> [self, :workbook_path]
+              }
+
+              spinbox(5, 60) {
+                stretchy false
+
+                label "Autosave Period (in seconds)"
+                value <=> [self, :autosave_period]
+              }
+
+              checkbox {
+                stretchy false
+
+                label "Advanced Settings"
+                text "Enabled"
+                checked <=> [self, :advanced_settings_enabled]
+              }
+            }
           }
         }
       }
@@ -56,6 +86,14 @@ class JottApp
 
   def editing?
     editing
+  end
+
+  def advanced_settings_disabled?
+    !advanced_settings_enabled?
+  end
+
+  def advanced_settings_enabled?
+    advanced_settings_enabled
   end
 
   def has_content?
@@ -68,7 +106,6 @@ class JottApp
 
   # TODO put actual saving logic here eventually
   def save_contents
-    puts "saving current content"
-    puts current_content
+    # save logic
   end
 end
