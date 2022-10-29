@@ -6,9 +6,7 @@ require "standard/rake"
 task default: %i[standard spec]
 
 task :run do
-  require "./lib/jott_app"
-
-  JottApp.new.launch
+  require "./lib/jatt"
 end
 
 RSpec::Core::RakeTask.new(:spec)
