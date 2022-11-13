@@ -8,9 +8,9 @@ require "./lib/custom_components/tabs/edit_tab"
 require "./lib/custom_components/tabs/explore_tab"
 require "./lib/custom_components/tabs/settings_tab"
 
-require "./lib/ext/controls"
-
 require "./lib/util"
+
+require_all("./lib/ext")
 
 class App
   include Glimmer
@@ -29,7 +29,7 @@ class App
     @main_window ||=
       window("Jott") {
         content_size 600, 400
-        resizable false
+        resizable true
 
         tab {
           edit_tab(
