@@ -33,9 +33,7 @@ class ExploreTab
   end
 
   Note = OptStruct.new do
-    required :name, :text
-
-    init { options[:text] = Faker::Quote.famous_last_words }
+    required :name
   end
 
   body {
@@ -60,7 +58,7 @@ class ExploreTab
               enabled false
 
               on_clicked do |button|
-                workbooks << Workbook.new(workbook_entry_text, "⠀", "X")
+                workbooks << Workbook.new(name: workbook_entry_text)
                 self.workbook_entry_text = ""
                 update_button
               end
@@ -164,7 +162,7 @@ class ExploreTab
   end
 
   def init_notes
-    notes = @selected_workbook.notes.dup
+    @notes = @selected_workbook.notes.dup
 
     class << notes
       def add_all(collection)
