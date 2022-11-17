@@ -4,6 +4,7 @@ require "opt_struct"
 
 require "./lib/custom_components/horizontal_spacer"
 require "./lib/custom_components/vertical_spacer"
+require "./lib/custom_components/confirm_window"
 
 require "./lib/ext/string"
 
@@ -45,7 +46,7 @@ class ExploreTab
                 "Name" => {
                   button: {
                     on_clicked: -> (row_index) do
-                      select_workbook_row(@workbook_table.refined_model_array[row_index])
+                      select_workbook_row(row_index)
                     end
                   }
                 },
@@ -53,7 +54,12 @@ class ExploreTab
                 "Delete" => {
                   button: {
                     on_clicked: -> (row_index) do
-                      puts workbook_rows.delete_at(row_index)
+                      confirm_window(
+                        action_description: "delete workbook \"#{get_workbook(row_index).name}\"",
+                        on_confirm: -> {
+                          delete_workbook(row_index)
+                        }
+                      ).show
                     end
                   }
                 },
@@ -62,7 +68,7 @@ class ExploreTab
               filter: -> (row_hash, query) do
                 DEFAULT_RT_FILTER.call(row_hash, query).tap do |result|
                   unless result
-                    @selected_workbook_row.toggle_open
+                    @selected_workbook_row&.toggle_open
                     @selected_workbook_row = nil
                     update_note_rows
                   end
@@ -116,7 +122,12 @@ class ExploreTab
                 "Delete" => {
                   button: {
                     on_clicked: -> (row_index) do
-                      puts note_rows.delete_at(row_index)
+                      confirm_window(
+                        action_description: "delete note \"#{get_note(row_index).name}\"",
+                        on_confirm: -> {
+                          delete_note(row_index)
+                        }
+                      ).show
                     end
                   }
                 },
@@ -165,6 +176,36 @@ class ExploreTab
 
   private
 
+  def get_workbook(index)
+    @workbook_table.refined_model_array[index]
+  end
+
+  def get_note(index)
+    @notes_table.refined_model_array[index]
+  end
+
+  def delete_workbook(index)
+    workbook_row = @workbook_table.refined_model_array.delete_at(index)
+    if @selected_workbook_row == workbook_row
+      @selected_workbook_row = nil
+    end
+
+    workbook_rows.delete(workbook_row)
+    @workbook_panel.hide
+    @workbook_panel.show
+
+    update_note_rows
+  end
+
+  def delete_note(index)
+    note_row = @notes_table.refined_model_array.delete_at(index)
+    if @select_note_row == note_row
+      @select_note_row = nil
+    end
+
+    note_rows.delete(note_row)
+  end
+
   def create_new_workbook(name)
     workbook_rows << TableRow.new(name: name)
   end
@@ -174,7 +215,9 @@ class ExploreTab
     update_note_rows
   end
 
-  def select_workbook_row(workbook_row)
+  def select_workbook_row(index)
+    workbook_row = @workbook_table.refined_model_array[index]
+
     @selected_workbook_row&.toggle_open
 
     if @selected_workbook_row != workbook_row
@@ -196,7 +239,7 @@ class ExploreTab
 
   def update_note_rows
     note_rows.clear.add_all(
-      @selected_workbook_row.child_rows.map do |note_name|
+      @selected_workbook_row&.child_rows&.map do |note_name|
         TableRow.new(name: note_name)
       end
     )
@@ -210,7 +253,7 @@ class ExploreTab
     @note_rows ||= [].tap do |arr|
       class << arr
         def add_all(collection)
-          collection.each do |e|
+          collection&.each do |e|
             self << e
           end
         end
