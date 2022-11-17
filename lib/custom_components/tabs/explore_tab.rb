@@ -10,7 +10,7 @@ require "./lib/ext/string"
 class ExploreTab
   include Glimmer::LibUI::CustomControl
 
-  attr_accessor :workbook_entry_text, :create_button_enabled, :notes
+  attr_accessor :workbook_entry_text, :note_entry_text, :notes
 
   DEFAULT_BUTTON_TEXT = "Create new workbook"
   DEFAULT_RT_FILTER = Glimmer::LibUI::CustomControl::RefinedTable::FILTER_DEFAULT
@@ -38,92 +38,116 @@ class ExploreTab
 
   body {
     tab_item("Explore") {
-      vertical_box {
-        vertical_box {
-          stretchy false
+      horizontal_box {
+        horizontal_spacer {}
+        @workbook_panel = vertical_box {
+          stretchy true
 
-          horizontal_box {
-            entry {
-              stretchy true
-
-              text <=> [self, :workbook_entry_text,
-                after_write: -> {
-                  update_button
-                }
-              ]
-            }
-            @create_button = button(DEFAULT_BUTTON_TEXT) {
-              stretchy true
-
-              enabled false
-
-              on_clicked do |button|
-                workbooks << Workbook.new(name: workbook_entry_text)
-                self.workbook_entry_text = ""
-                update_button
+          vertical_box {
+            @workbook_table = refined_table(
+              model_array: workbooks,
+              table_columns: {
+                "Name" => {
+                  button: {
+                    on_clicked: -> (row_index) do
+                      select_workbook(@workbook_table.refined_model_array[row_index])
+                    end
+                  }
+                },
+                "Open" => :checkbox,
+                "Delete" => {
+                  button: {
+                    on_clicked: -> (row_index) do
+                      puts workbooks.delete_at(row_index)
+                    end
+                  }
+                },
+              },
+              table_editable: false,
+              filter: -> (row_hash, query) do
+                DEFAULT_RT_FILTER.call(row_hash, query).tap do |result|
+                  unless result
+                    @selected_workbook.toggle_open
+                    @selected_workbook = nil
+                  end
+                end
               end
+            )
+          }
+          vertical_box {
+            stretchy false
+
+            horizontal_box {
+              entry {
+                stretchy true
+
+                text <=> [self, :workbook_entry_text,
+                  after_write: -> {
+                    @create_workbook_button.enabled = workbook_entry_text.present?
+                  }
+                ]
+              }
+              @create_workbook_button = button("New Workbook") {
+                stretchy true
+
+                enabled false
+
+                on_clicked do |button|
+                  create_new_workbook(workbook_entry_text)
+
+                  self.workbook_entry_text = ""
+                  button.enabled = false
+                end
+              }
             }
           }
         }
-
-        horizontal_box {
+        @notes_panel = vertical_box {
           stretchy true
 
-          @workbook_panel = vertical_box {
-            stretchy true
-
-            vertical_box {
-              @workbook_table = refined_table(
-                model_array: workbooks,
-                table_columns: {
-                  "Name" => {
-                    button: {
-                      on_clicked: -> (row_index) do
-                        select_workbook(@workbook_table.refined_model_array[row_index])
-                      end
-                    }
-                  },
-                  "Open" => :checkbox,
-                  "Delete" => {
-                    button: {
-                      on_clicked: -> (row_index) do
-                        puts workbooks.delete_at(row_index)
-                      end
-                    }
-                  },
-                },
-                table_editable: false,
-                filter: -> (row_hash, query) do
-                  DEFAULT_RT_FILTER.call(row_hash, query).tap do |result|
-                    unless result
-                      @selected_workbook.toggle_open
-                      @selected_workbook = nil
+          vertical_box {
+            @notes_table = refined_table(
+              model_array: notes,
+              table_columns: {
+                "Name" => {
+                  button: {
+                    on_clicked: -> (row_index) do
+                      # TODO fix this to work with index
+                      @selected_note = @notes_table.refined_model_array[row_index]
+                      puts @selected_note
                     end
-                  end
-                end
-              )
+                  }
+                }
+              },
+              table_editable: false
+            ) {
+              stretchy false
             }
           }
-          @notes_panel = vertical_box {
-            stretchy true
+          vertical_box {
+            stretchy false
 
-            vertical_box {
-              @notes_table = refined_table(
-                model_array: notes,
-                table_columns: {
-                  "Name" => {
-                    button: {
-                      on_clicked: -> (row_index) do
-                        # TODO fix this to work with index
-                        @selected_note = @notes_table.refined_model_array[row_index]
-                        puts @selected_note
-                      end
-                    }
+            horizontal_box {
+              entry {
+                stretchy true
+
+                text <=> [self, :note_entry_text,
+                  after_write: -> {
+                    @create_note_button.enabled = note_entry_text.present?
                   }
-                },
-                table_editable: false
-              ) {
-                stretchy false
+                ]
+              }
+              @create_note_button = button("New Note") {
+                stretchy true
+
+                enabled false
+
+                on_clicked do |button|
+                  create_new_note(note_entry_text)
+
+                  self.note_entry_text = ""
+                  button.enabled = false
+                end
               }
             }
           }
@@ -134,27 +158,29 @@ class ExploreTab
 
   private
 
+  def create_new_workbook(name)
+    workbooks << Workbook.new(name: name)
+  end
+
+  def create_new_note(name)
+    @selected_workbook.notes << Note.new(name: name)
+    update_notes_list
+  end
+
   def select_workbook(workbook)
     @selected_workbook&.toggle_open
 
     if @selected_workbook != workbook
       workbook.open = true
       @selected_workbook = workbook
-
-      notes.clear
-      notes.add_all(workbook.notes.dup)
     end
+
+    update_notes_list
   end
 
-  def update_button
-    text_present = @workbook_entry_text.present?
-    @create_button.text =
-      if text_present
-        "#{DEFAULT_BUTTON_TEXT} \"#{@workbook_entry_text}\""
-      else
-        DEFAULT_BUTTON_TEXT
-      end
-    @create_button.enabled = @workbook_entry_text.present?
+  def update_notes_list
+    notes.clear
+    notes.add_all(@selected_workbook.notes.dup)
   end
 
   def workbooks
