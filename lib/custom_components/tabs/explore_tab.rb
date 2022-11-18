@@ -1,10 +1,11 @@
-require "fileutils"
 require "glimmer-dsl-libui"
 require "opt_struct"
 
+require "./lib/custom_components/confirm_window"
 require "./lib/custom_components/horizontal_spacer"
 require "./lib/custom_components/vertical_spacer"
-require "./lib/custom_components/confirm_window"
+
+require "./lib/file_manager"
 
 require "./lib/ext/string"
 
@@ -12,6 +13,8 @@ class ExploreTab
   include Glimmer::LibUI::CustomControl
 
   attr_accessor :workbook_entry_text, :note_entry_text, :note_rows
+
+  FM = FileManager.instance
 
   DEFAULT_BUTTON_TEXT = "Create new workbook"
   DEFAULT_RT_FILTER = Glimmer::LibUI::CustomControl::RefinedTable::FILTER_DEFAULT
@@ -207,11 +210,15 @@ class ExploreTab
   end
 
   def create_new_workbook(name)
+    FM.create_new_workbook(name)
+
     workbook_rows << TableRow.new(name: name)
   end
 
   def create_new_note(name)
-    @selected_workbook_row.child_rows << TableRow.new(name: name)
+    FM.create_new_note(@selected_workbook_row.name, name)
+
+    @selected_workbook_row.child_rows << name
     update_note_rows
   end
 
@@ -262,11 +269,17 @@ class ExploreTab
   end
 
   def load_workbooks
-    # TODO: load from db
     [].tap do |arr|
-      BOOKS_AND_NOTES.each do |wb_name, note_names|
+      workbook_names = FM.get_all_workbooks.map { |p| File.basename(p) }
+
+      workbook_names.each do |wb_name|
         arr << TableRow.new(name: wb_name).tap do |wb|
-          note_names.each { |name| wb.child_rows << name }
+          note_names = FM.get_all_notes_for_workbook(wb_name).map { |p| File.basename(p, ".*") }
+          binding.pry
+
+          note_names.each do |note_name|
+            wb.child_rows << note_name
+          end
         end
       end
     end
