@@ -15,15 +15,7 @@ class ExploreTab
   attr_accessor :workbook_entry_text, :note_entry_text, :note_rows
 
   FM = FileManager.instance
-
-  DEFAULT_BUTTON_TEXT = "Create new workbook"
   DEFAULT_RT_FILTER = Glimmer::LibUI::CustomControl::RefinedTable::FILTER_DEFAULT
-
-  BOOKS_AND_NOTES = {
-    first: %w(apples bananas),
-    second: %w(grapes cherries oranges),
-    third: %w(blueberries)
-  }
 
   TableRow = OptStruct.new do
     required :name
