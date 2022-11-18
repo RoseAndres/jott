@@ -267,7 +267,6 @@ class ExploreTab
       workbook_names.each do |wb_name|
         arr << TableRow.new(name: wb_name).tap do |wb|
           note_names = FM.get_all_notes_for_workbook(wb_name).map { |p| File.basename(p, ".*") }
-          binding.pry
 
           note_names.each do |note_name|
             wb.child_rows << note_name
