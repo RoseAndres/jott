@@ -5,7 +5,7 @@ require "./lib/file_manager"
 class EditTab
   include Glimmer::LibUI::CustomControl
 
-  attr_reader :last_modified
+  attr_reader :last_modified, :editing
   attr_accessor :file_contents
 
   FM = FileManager.instance
@@ -20,7 +20,14 @@ class EditTab
             self,
             :file_contents,
             after_write: -> {
-              self.last_modified = Time.now.to_i
+              unless editing?
+                @editing = true
+
+                Glimmer::LibUI::timer(autosave_period, repeat: false) do
+                  update_note
+                  @editing = false
+                end
+              end
             }
           ]
         }
@@ -29,22 +36,23 @@ class EditTab
   }
 
   def open_note(workbook_name, note_name)
+    @workbook = workbook_name
+    @note = note_name
+
     self.file_contents = FM.get_note_contents(workbook_name, note_name)
+  end
+
+  def update_note
+    FM.write_to_note(@workbook, @note, self.file_contents)
   end
 
   private
 
-  def last_modified=(new_value)
-    @last_modified = new_value
-    # puts "modified at #{last_modified}"
-
-    Glimmer::LibUI::timer(autosave_period, repeat: false) do
-      # puts "#{@last_modified} - #{Time.now.to_i}"
-      save_contents if Time.now.to_i - @last_modified >= autosave_period
-    end
+  def editing
+    @editing ||= false
   end
 
-  def save_contents
-    # TODO: write note contents to file
+  def editing?
+    editing
   end
 end

@@ -26,6 +26,10 @@ class FileManager
     File.open(path_to_note(workbook_name, note_name)).read
   end
 
+  def write_to_note(workbook_name, note_name, text)
+    File.write(path_to_note(workbook_name, note_name), text)
+  end
+
   private
 
   def base_path
