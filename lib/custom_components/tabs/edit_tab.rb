@@ -1,12 +1,16 @@
 require "glimmer-dsl-libui"
 
+require "./lib/file_manager"
+
 class EditTab
   include Glimmer::LibUI::CustomControl
 
   attr_reader :last_modified
+  attr_accessor :file_contents
+
+  FM = FileManager.instance
 
   option :autosave_period, default: 10
-  option :file_contents, default: "some text"
 
   body {
     tab_item("Edit") {
@@ -24,6 +28,10 @@ class EditTab
     }
   }
 
+  def open_note(workbook_name, note_name)
+    self.file_contents = FM.get_note_contents(workbook_name, note_name)
+  end
+
   private
 
   def last_modified=(new_value)
@@ -37,7 +45,6 @@ class EditTab
   end
 
   def save_contents
-    # save logic
-    # puts "save"
+    # TODO: write note contents to file
   end
 end

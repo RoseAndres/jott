@@ -12,9 +12,13 @@ require "./lib/ext/string"
 class ExploreTab
   include Glimmer::LibUI::CustomControl
 
-  attr_accessor :workbook_entry_text, :note_entry_text, :note_rows
+  option :open_note_function
+
+  attr_accessor :workbook_entry_text, :note_entry_text, :note_rows,
+                :selected_notebook_row, :selected_note_row
 
   FM = FileManager.instance
+
   DEFAULT_RT_FILTER = Glimmer::LibUI::CustomControl::RefinedTable::FILTER_DEFAULT
 
   TableRow = OptStruct.new do
@@ -228,11 +232,13 @@ class ExploreTab
   end
 
   def select_note_row(note_row)
-    @select_note_row&.toggle_open
+    @selected_note_row&.toggle_open
 
-    if @select_note_row != note_row
+    if @selected_note_row != note_row
       note_row.open = true
       @selected_note_row = note_row
+
+      open_note_function.call(@selected_workbook_row.name, @selected_note_row.name)
     end
   end
 
