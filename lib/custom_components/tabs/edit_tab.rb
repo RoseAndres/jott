@@ -43,10 +43,14 @@ class EditTab
   end
 
   def update_note
-    FM.write_to_note(@workbook, @note, self.file_contents)
+    FM.write_to_note(@workbook, @note, self.file_contents) if should_update_note?
   end
 
   private
+
+  def should_update_note?
+    !@workbook.nil? && !@note.nil?
+  end
 
   def editing
     @editing ||= false

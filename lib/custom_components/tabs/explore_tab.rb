@@ -12,7 +12,7 @@ require "./lib/ext/string"
 class ExploreTab
   include Glimmer::LibUI::CustomControl
 
-  option :open_note_function
+  option :edit_tab
 
   attr_accessor :workbook_entry_text, :note_entry_text, :note_rows,
                 :selected_notebook_row, :selected_note_row
@@ -235,10 +235,12 @@ class ExploreTab
     @selected_note_row&.toggle_open
 
     if @selected_note_row != note_row
+      edit_tab.update_note
+
       note_row.open = true
       @selected_note_row = note_row
 
-      open_note_function.call(@selected_workbook_row.name, @selected_note_row.name)
+      edit_tab.open_note(@selected_workbook_row.name, @selected_note_row.name)
     end
   end
 

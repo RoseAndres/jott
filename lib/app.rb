@@ -33,11 +33,7 @@ class App
 
         tab {
           @edit_tab = edit_tab
-          explore_tab(
-            open_note_function: lambda do |workbook_name, note_name|
-              @edit_tab.open_note(workbook_name, note_name)
-            end
-          )
+          explore_tab(edit_tab: @edit_tab)
           settings_tab
         }
       }
